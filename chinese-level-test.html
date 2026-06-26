@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>차이랑 중국어 레벨테스트</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --teal:      #00BFB3;
+      --teal-dark: #00857A;
+      --yellow:    #FFB81C;
+      --bg:        #F7FAFA;
+      --white:     #FFFFFF;
+      --text:      #1A2E2C;
+      --muted:     #6B8684;
+      --border:    #D4E8E6;
+      --correct:   #00A878;
+      --wrong:     #E84855;
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px 60px;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: 0 4px 24px rgba(0,133,122,0.10);
+      width: 100%;
+      max-width: 600px;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal) 100%);
+      padding: 32px 32px 28px;
+      position: relative;
+    }
+    .header-badge {
+      display: inline-block;
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+    .header h1 {
+      color: #fff;
+      font-size: 24px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+    .header p {
+      color: rgba(255,255,255,0.75);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    .header-accent {
+      position: absolute;
+      right: 28px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 52px;
+      opacity: 0.18;
+      line-height: 1;
+    }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      padding: 20px 32px 0;
+    }
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .progress-bar-bg {
+      background: var(--border);
+      border-radius: 99px;
+      height: 6px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--teal), var(--yellow));
+      border-radius: 99px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Question ── */
+    .question-wrap {
+      padding: 28px 32px 0;
+    }
+    .q-level {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      color: var(--teal-dark);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .q-text {
+      font-size: 17px;
+      font-weight: 500;
+      line-height: 1.6;
+      margin-bottom: 6px;
+    }
+    .q-pinyin {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    /* ── Options ── */
+    .options {
+      display: grid;
+      gap: 10px;
+      padding: 0 32px 28px;
+    }
+    .option-btn {
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 18px;
+      text-align: left;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--teal);
+      background: #EAF9F8;
+      transform: translateY(-1px);
+    }
+    .option-btn .opt-label {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+    .option-btn.correct {
+      border-color: var(--correct);
+      background: #EDFAF5;
+    }
+    .option-btn.correct .opt-label { background: var(--correct); color: #fff; }
+    .option-btn.wrong {
+      border-color: var(--wrong);
+      background: #FEF0F1;
+    }
+    .option-btn.wrong .opt-label { background: var(--wrong); color: #fff; }
+    .option-btn:disabled { cursor: default; }
+
+    /* ── Feedback ── */
+    .feedback {
+      margin: 0 32px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.55;
+      display: none;
+      margin-bottom: 20px;
+    }
+    .feedback.show { display: block; }
+    .feedback.correct-fb { background: #EDFAF5; border-left: 4px solid var(--correct); }
+    .feedback.wrong-fb   { background: #FEF0F1; border-left: 4px solid var(--wrong); }
+    .feedback strong { font-weight: 700; }
+
+    /* ── Next button ── */
+    .btn-next {
+      display: none;
+      margin: 0 32px 32px;
+      width: calc(100% - 64px);
+      padding: 14px;
+      background: var(--teal-dark);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+    .btn-next:hover { background: #006B62; transform: translateY(-1px); }
+    .btn-next.show { display: block; }
+
+    /* ── Result ── */
+    .result {
+      display: none;
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .result.show { display: block; }
+    .result-emoji { font-size: 56px; margin-bottom: 16px; }
+    .result-level {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 6px 18px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+    }
+    .result h2 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .result p {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 380px;
+      margin: 0 auto 28px;
+    }
+    .result-score {
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--teal-dark);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .result-score-label {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+    }
+    .btn-retry {
+      padding: 13px 36px;
+      background: var(--yellow);
+      color: var(--text);
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-retry:hover { background: #E6A600; transform: translateY(-1px); }
+
+    /* ── Intro ── */
+    .intro {
+      padding: 32px;
+    }
+    .intro-list {
+      list-style: none;
+      margin: 20px 0 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .intro-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .intro-list li .icon {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .btn-start {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--teal-dark), var(--teal));
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.3px;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn-start:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    @media (max-width: 480px) {
+      .header { padding: 24px 20px 20px; }
+      .header-accent { display: none; }
+      .question-wrap { padding: 24px 20px 0; }
+      .options { padding: 0 20px 20px; }
+      .feedback, .btn-next { margin-left: 20px; margin-right: 20px; }
+      .btn-next { width: calc(100% - 40px); }
+      .intro { padding: 24px 20px; }
+      .progress-wrap { padding: 16px 20px 0; }
+      .result { padding: 32px 20px; }
+    }
+  </style>
+</head>
+<body>
+<div class="card">
+
+  <!-- HEADER (항상 표시) -->
+  <div class="header">
+    <div class="header-badge">차이랑중국어</div>
+    <h1>중국어 레벨테스트</h1>
+    <p>나에게 맞는 수준을 10문제로 확인해보세요</p>
+    <div class="header-accent">汉</div>
+  </div>
+
+  <!-- INTRO SCREEN -->
+  <div class="intro" id="introScreen">
+    <ul class="intro-list">
+      <li><span class="icon">📝</span> 총 10문제 · 사지선다형</li>
+      <li><span class="icon">⏱️</span> 제한 시간 없음 · 천천히 풀어도 OK</li>
+      <li><span class="icon">📊</span> 완료 후 레벨 결과 즉시 확인</li>
+      <li><span class="icon">🔕</span> 뒤로가기 없음 · 신중하게 선택하세요</li>
+    </ul>
+    <button class="btn-start" onclick="startTest()">테스트 시작하기</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quizScreen" style="display:none;">
+    <div class="progress-wrap">
+      <div class="progress-meta">
+        <span id="progressLabel">1 / 10</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="question-wrap">
+      <div class="q-level" id="qLevel"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="q-pinyin" id="qPinyin"></div>
+    </div>
+
+    <div class="options" id="optionsWrap"></div>
+
+    <div class="feedback" id="feedback"></div>
+    <button class="btn-next" id="btnNext" onclick="nextQuestion()">다음 문제 →</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="result" id="resultScreen">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-level" id="resultLevelBadge"></div>
+    <h2 id="resultTitle"></h2>
+    <div class="result-score" id="resultScore"></div>
+    <div class="result-score-label">정답 / 10문제</div>
+    <p id="resultDesc"></p>
+    <button class="btn-retry" onclick="retryTest()">다시 테스트하기</button>
+  </div>
+
+</div>
+
+<script>
+const questions = [
+  // ── 입문 ──
+  {
+    level: "입문",
+    text: "다음 중 '안녕하세요'에 해당하는 중국어는?",
+    pinyin: "",
+    options: ["你好", "谢谢", "再见", "对不起"],
+    answer: 0,
+    explanation: "你好(nǐ hǎo)는 '안녕하세요'라는 뜻의 가장 기본적인 인사말입니다."
+  },
+  {
+    level: "입문",
+    text: "밑줄에 알맞은 단어는? 我_中国人。(저는 중국인입니다)",
+    pinyin: "Wǒ ___ Zhōngguó rén.",
+    options: ["是", "有", "在", "会"],
+    answer: 0,
+    explanation: "是(shì)는 '~이다'라는 의미의 동사로, 영어의 be동사와 같습니다."
+  },
+  // ── 기초 ──
+  {
+    level: "기초",
+    text: "다음 중 뜻이 나머지와 다른 하나는?",
+    pinyin: "",
+    options: ["苹果 (사과)", "香蕉 (바나나)", "桌子 (책상)", "西瓜 (수박)"],
+    answer: 2,
+    explanation: "桌子(zhuōzi)는 '책상'으로 가구이고, 나머지 셋은 모두 과일입니다."
+  },
+  {
+    level: "기초",
+    text: "빈칸에 들어갈 말은? 今天天气_热。(오늘 날씨가 너무 덥다)",
+    pinyin: "Jīntiān tiānqì ___ rè.",
+    options: ["很", "太", "真", "好"],
+    answer: 1,
+    explanation: "太…了 구조로 '너무 ~하다'를 표현합니다. 太热了처럼 사용합니다."
+  },
+  // ── 초급 ──
+  {
+    level: "초급",
+    text: "다음 문장의 뜻으로 올바른 것은? 我已经吃饭了。",
+    pinyin: "Wǒ yǐjīng chī fàn le.",
+    options: [
+      "나는 밥을 먹고 싶다",
+      "나는 이미 밥을 먹었다",
+      "나는 밥을 먹고 있다",
+      "나는 밥을 먹지 않았다"
+    ],
+    answer: 1,
+    explanation: "已经(yǐjīng)는 '이미', 了는 완료를 나타냅니다. '나는 이미 밥을 먹었다'가 정답입니다."
+  },
+  {
+    level: "초급",
+    text: "빈칸에 가장 자연스러운 표현은? A: 你会说英语吗？ B: ___，我会说一点儿。",
+    pinyin: "",
+    options: ["不对", "会", "好的", "没问题"],
+    answer: 1,
+    explanation: "会(huì)로 앞 문장의 '~할 수 있니?'에 '응, 조금 할 수 있어'라고 호응합니다."
+  },
+  // ── 중급 ──
+  {
+    level: "중급",
+    text: "밑줄 친 부분의 쓰임이 올바른 문장은?",
+    pinyin: "",
+    options: [
+      "他把书放在桌子上了。",
+      "他把书在桌子上放了。",
+      "他把桌子上的书放了。",
+      "把他书放在桌子上了。"
+    ],
+    answer: 0,
+    explanation: "把자문 어순: 주어+把+목적어+동사+기타. '그가 책을 책상 위에 놓았다'가 맞습니다."
+  },
+  {
+    level: "중급",
+    text: "다음 문장에서 被의 의미로 올바른 것은? 我的手机被他借走了。",
+    pinyin: "Wǒ de shǒujī bèi tā jiè zǒu le.",
+    options: [
+      "내가 그의 핸드폰을 빌려갔다",
+      "내 핸드폰이 그에게 빌려졌다",
+      "나는 핸드폰으로 그를 찾았다",
+      "그가 핸드폰을 사러 갔다"
+    ],
+    answer: 1,
+    explanation: "被(bèi)는 수동태를 만듭니다. '내 핸드폰이 그에게 빌려졌다(빌려갔다)'가 정답입니다."
+  },
+  // ── 중고급 ──
+  {
+    level: "중고급",
+    text: "다음 중 '설령 ~하더라도'를 표현하는 구문은?",
+    pinyin: "",
+    options: ["虽然…但是…", "即使…也…", "只要…就…", "既然…就…"],
+    answer: 1,
+    explanation: "即使…也…(jíshǐ…yě…)는 '설령 ~하더라도 역시 ~하다'는 양보 구문입니다."
+  },
+  // ── 고급 ──
+  {
+    level: "고급",
+    text: "다음 사자성어의 뜻으로 가장 적절한 것은? 半途而废",
+    pinyin: "bàntú ér fèi",
+    options: [
+      "끝까지 해내다",
+      "시작이 반이다",
+      "중도에 그만두다",
+      "서두르면 이룰 수 없다"
+    ],
+    answer: 2,
+    explanation: "半途而废(bàntú ér fèi)는 '중도에 포기하다'는 뜻입니다. 半途(중간)+废(포기)."
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+function startTest() {
+  document.getElementById('introScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[current];
+  const total = questions.length;
+
+  // Progress
+  const pct = Math.round((current / total) * 100);
+  document.getElementById('progressLabel').textContent = `${current + 1} / ${total}`;
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  // Question
+  document.getElementById('qLevel').textContent = `Level · ${q.level}`;
+  document.getElementById('qText').textContent = `Q${current + 1}. ${q.text}`;
+  document.getElementById('qPinyin').textContent = q.pinyin;
+
+  // Options
+  const wrap = document.getElementById('optionsWrap');
+  wrap.innerHTML = '';
+  const labels = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-label">${labels[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i);
+    wrap.appendChild(btn);
+  });
+
+  // Feedback & Next
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback';
+  fb.textContent = '';
+  document.getElementById('btnNext').className = 'btn-next';
+}
+
+function selectAnswer(selected) {
+  if (answered) return;
+  answered = true;
+
+  const q = questions[current];
+  const btns = document.querySelectorAll('.option-btn');
+  const isCorrect = selected === q.answer;
+
+  if (isCorrect) score++;
+
+  btns.forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else if (i === selected && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('feedback');
+  if (isCorrect) {
+    fb.className = 'feedback correct-fb show';
+    fb.innerHTML = `<strong>✓ 정답!</strong> ${q.explanation}`;
+  } else {
+    fb.className = 'feedback wrong-fb show';
+    fb.innerHTML = `<strong>✗ 오답.</strong> ${q.explanation}`;
+  }
+
+  document.getElementById('btnNext').className = 'btn-next show';
+  document.getElementById('btnNext').textContent =
+    current < questions.length - 1 ? '다음 문제 →' : '결과 보기';
+}
+
+function nextQuestion() {
+  current++;
+  if (current >= questions.length) {
+    showResult();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  const rs = document.getElementById('resultScreen');
+  rs.className = 'result show';
+
+  const pct = score / questions.length;
+  let emoji, level, title, desc;
+
+  if (pct >= 0.9) {
+    emoji = '🏆'; level = '고급 (HSK 5~6)';
+    title = '중국어 마스터!';
+    desc = '최고 수준의 실력을 보여주셨습니다! 차이랑 고급 과정이나 HSK 6급 준비반을 추천드립니다.';
+  } else if (pct >= 0.7) {
+    emoji = '🎯'; level = '중고급 (HSK 4~5)';
+    title = '탄탄한 중국어 실력!';
+    desc = '문법과 어휘의 기반이 잘 갖춰져 있습니다. 차이랑 중고급 과정으로 한 단계 더 도약해보세요.';
+  } else if (pct >= 0.5) {
+    emoji = '📈'; level = '중급 (HSK 3~4)';
+    title = '착실하게 성장 중!';
+    desc = '기초가 잘 잡혀 있어요. 차이랑 중급 과정을 통해 표현력을 더 넓혀보세요.';
+  } else if (pct >= 0.3) {
+    emoji = '🌱'; level = '초급 (HSK 1~2)';
+    title = '좋은 출발점!';
+    desc = '핵심 기초 표현들을 익히고 있군요. 차이랑 기초 과정에서 체계적으로 배워보세요!';
+  } else {
+    emoji = '👋'; level = '입문';
+    title = '중국어의 첫 걸음!';
+    desc = '걱정 마세요, 누구나 처음은 있습니다. 차이랑 입문 과정에서 발음부터 차근차근 시작해봐요!';
+  }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultLevelBadge').textContent = level;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultScore').textContent = `${score} / ${questions.length}`;
+  document.getElementById('resultDesc').textContent = desc;
+
+  // Progress bar full
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressPct').textContent = '100%';
+}
+
+function retryTest() {
+  current = 0;
+  score = 0;
+  document.getElementById('resultScreen').className = 'result';
+  document.getElementById('quizScreen').style.display = 'block';
+  document.getElementById('progressFill').style.width = '0%';
+  renderQuestion();
+}
+</script>
+</body>
+</html>
