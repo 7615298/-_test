@@ -600,6 +600,35 @@ let answered = false;
 // ── Mock exam (HSK 1~6급) ──
 const mockLevels = [1, 2, 3, 4, 5, 6];
 let activeMockLevel = 1;
+let mockCurrent = 0;
+let mockScore = 0;
+let mockAnswered = false;
+
+const mockQuestions = {
+  1: [
+    {
+      text: "다음 중 '사과'를 뜻하는 단어는?",
+      pinyin: "",
+      options: ["苹果", "水", "书", "猫"],
+      answer: 0,
+      explanation: "苹果(píngguǒ)는 '사과'입니다. HSK 1급 필수 어휘예요."
+    },
+    {
+      text: "'你好'의 뜻으로 올바른 것은?",
+      pinyin: "Nǐ hǎo",
+      options: ["감사합니다", "안녕하세요", "죄송합니다", "잘 가요"],
+      answer: 1,
+      explanation: "你好(nǐ hǎo)는 '안녕하세요'라는 가장 기본적인 인사말입니다."
+    },
+    {
+      text: "빈칸에 알맞은 숫자는? 一, 二, ___, 四",
+      pinyin: "Yī, èr, ___, sì",
+      options: ["五", "三", "六", "七"],
+      answer: 1,
+      explanation: "一(1)·二(2)·三(3)·四(4) 순서입니다. 三(sān)이 정답이에요."
+    }
+  ]
+};
 
 function startMock() {
   document.getElementById('mockIntro').style.display = 'none';
@@ -623,10 +652,81 @@ function renderMockTabs() {
 function selectMockLevel(lv) {
   activeMockLevel = lv;
   renderMockTabs();
-  const panel = document.getElementById('mockPanel');
-  panel.innerHTML =
-    `<div class="mock-panel-title">HSK ${lv}급 모의고사</div>` +
-    `문제가 준비 중입니다.`;
+  if (mockQuestions[lv]) {
+    mockCurrent = 0;
+    mockScore = 0;
+    mockAnswered = false;
+    renderMockQuestion();
+  } else {
+    const panel = document.getElementById('mockPanel');
+    panel.innerHTML =
+      `<div class="mock-panel-title">HSK ${lv}급 모의고사</div>문제가 준비 중입니다.`;
+  }
+}
+
+function renderMockQuestion() {
+  const qs = mockQuestions[activeMockLevel];
+  const q = qs[mockCurrent];
+  const labels = ['A','B','C','D'];
+  mockAnswered = false;
+
+  const pct = Math.round((mockCurrent / qs.length) * 100);
+  document.getElementById('mockPanel').innerHTML = `
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px;">
+        <span>${mockCurrent + 1} / ${qs.length}</span><span>${pct}%</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div style="font-size:15px;font-weight:500;margin-bottom:4px;text-align:left;">${q.text}</div>
+    ${q.pinyin ? `<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:14px;text-align:left;">${q.pinyin}</div>` : '<div style="margin-bottom:14px;"></div>'}
+    <div id="mockOptions" style="display:grid;gap:8px;text-align:left;">
+      ${q.options.map((opt, i) => `
+        <button class="option-btn" onclick="selectMockAnswer(${i})" style="font-size:14px;padding:10px 14px;">
+          <span class="opt-label">${labels[i]}</span><span>${opt}</span>
+        </button>`).join('')}
+    </div>
+    <div id="mockFeedback" class="feedback" style="margin:12px 0 0;"></div>
+    <button id="mockBtnNext" class="btn-next" onclick="nextMockQuestion()" style="margin:12px 0 0;width:100%;"></button>
+  `;
+}
+
+function selectMockAnswer(selected) {
+  if (mockAnswered) return;
+  mockAnswered = true;
+  const q = mockQuestions[activeMockLevel][mockCurrent];
+  const isCorrect = selected === q.answer;
+  if (isCorrect) mockScore++;
+
+  document.querySelectorAll('#mockOptions .option-btn').forEach((btn, i) => {
+    btn.disabled = true;
+    if (i === q.answer) btn.classList.add('correct');
+    else if (i === selected && !isCorrect) btn.classList.add('wrong');
+  });
+
+  const fb = document.getElementById('mockFeedback');
+  fb.className = 'feedback show ' + (isCorrect ? 'correct-fb' : 'wrong-fb');
+  fb.innerHTML = `<strong>${isCorrect ? '✓ 정답!' : '✗ 오답.'}</strong> ${q.explanation}`;
+
+  const btn = document.getElementById('mockBtnNext');
+  const qs = mockQuestions[activeMockLevel];
+  btn.className = 'btn-next show';
+  btn.textContent = mockCurrent < qs.length - 1 ? '다음 문제 →' : '결과 보기';
+}
+
+function nextMockQuestion() {
+  mockCurrent++;
+  const qs = mockQuestions[activeMockLevel];
+  if (mockCurrent >= qs.length) {
+    document.getElementById('mockPanel').innerHTML = `
+      <div class="mock-panel-title">🎉 ${activeMockLevel}급 완료!</div>
+      <div style="font-size:36px;font-weight:700;color:var(--teal-dark);margin:12px 0 4px;">${mockScore} / ${qs.length}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">정답</div>
+      <button class="btn-start" onclick="selectMockLevel(${activeMockLevel})" style="font-size:14px;padding:12px;">다시 풀기</button>
+    `;
+  } else {
+    renderMockQuestion();
+  }
 }
 
 function startTest() {
