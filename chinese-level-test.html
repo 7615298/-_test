@@ -41,6 +41,8 @@
       width: 100%;
       max-width: 600px;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ── Header ── */
@@ -272,6 +274,9 @@
     /* ── Intro ── */
     .intro {
       padding: 32px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
     .intro-list {
       list-style: none;
@@ -299,6 +304,7 @@
     .btn-start {
       width: 100%;
       padding: 16px;
+      margin-top: auto;
       background: linear-gradient(135deg, var(--teal-dark), var(--teal));
       color: #fff;
       border: none;
@@ -311,6 +317,62 @@
       transition: opacity 0.15s, transform 0.1s;
     }
     .btn-start:hover { opacity: 0.9; transform: translateY(-1px); }
+    /* ── Cards row ── */
+    .cards-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+      justify-content: center;
+      gap: 24px;
+      width: 100%;
+      max-width: 1224px;
+    }
+    .cards-row .card { flex: 1 1 0; max-width: 600px; }
+
+    /* ── Mock exam ── */
+    .mock { padding: 24px 32px 32px; }
+    .mock-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .mock-tab {
+      flex: 1;
+      min-width: 64px;
+      padding: 10px 0;
+      background: var(--bg);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .mock-tab:hover { border-color: var(--teal); }
+    .mock-tab.active {
+      background: var(--teal-dark);
+      border-color: var(--teal-dark);
+      color: #fff;
+    }
+    .mock-panel {
+      background: var(--bg);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .mock-panel .mock-panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
 
     @media (max-width: 480px) {
       .header { padding: 24px 20px 20px; }
@@ -326,9 +388,43 @@
   </style>
 </head>
 <body>
+<div class="cards-row">
+
+<!-- ============ HSK 모의고사 카드 ============ -->
 <div class="card">
 
-  <!-- HEADER (항상 표시) -->
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-badge">차이랑중국어</div>
+    <h1>HSK 모의고사</h1>
+    <p>급수별 실전 문제로 시험을 대비하세요</p>
+    <div class="header-accent">考</div>
+  </div>
+
+  <!-- MOCK INTRO -->
+  <div class="intro" id="mockIntro">
+    <ul class="intro-list">
+      <li><span class="icon">📚</span> HSK 1급 ~ 6급 급수별 구성</li>
+      <li><span class="icon">✍️</span> 실전 형식의 모의고사 문제</li>
+      <li><span class="icon">🎯</span> 목표 급수에 맞춰 집중 연습</li>
+    </ul>
+    <button class="btn-start" onclick="startMock()">모의고사 시작하기</button>
+  </div>
+
+  <!-- MOCK SCREEN -->
+  <div class="mock" id="mockScreen" style="display:none;">
+    <div class="mock-tabs" id="mockTabs"></div>
+    <div class="mock-panel" id="mockPanel"></div>
+  </div>
+
+</div>
+<!-- ============ /HSK 모의고사 카드 ============ -->
+
+
+<!-- ============ 중국어 레벨테스트 카드 ============ -->
+<div class="card">
+
+  <!-- HEADER -->
   <div class="header">
     <div class="header-badge">차이랑중국어</div>
     <h1>중국어 레벨테스트</h1>
@@ -381,6 +477,9 @@
     <p id="resultDesc"></p>
     <button class="btn-retry" onclick="retryTest()">다시 테스트하기</button>
   </div>
+
+</div>
+<!-- ============ /중국어 레벨테스트 카드 ============ -->
 
 </div>
 
@@ -497,6 +596,38 @@ const questions = [
 let current = 0;
 let score = 0;
 let answered = false;
+
+// ── Mock exam (HSK 1~6급) ──
+const mockLevels = [1, 2, 3, 4, 5, 6];
+let activeMockLevel = 1;
+
+function startMock() {
+  document.getElementById('mockIntro').style.display = 'none';
+  document.getElementById('mockScreen').style.display = 'block';
+  activeMockLevel = 1;
+  selectMockLevel(1);
+}
+
+function renderMockTabs() {
+  const tabs = document.getElementById('mockTabs');
+  tabs.innerHTML = '';
+  mockLevels.forEach(lv => {
+    const btn = document.createElement('button');
+    btn.className = 'mock-tab' + (lv === activeMockLevel ? ' active' : '');
+    btn.textContent = lv + '급';
+    btn.onclick = () => selectMockLevel(lv);
+    tabs.appendChild(btn);
+  });
+}
+
+function selectMockLevel(lv) {
+  activeMockLevel = lv;
+  renderMockTabs();
+  const panel = document.getElementById('mockPanel');
+  panel.innerHTML =
+    `<div class="mock-panel-title">HSK ${lv}급 모의고사</div>` +
+    `문제가 준비 중입니다.`;
+}
 
 function startTest() {
   document.getElementById('introScreen').style.display = 'none';
